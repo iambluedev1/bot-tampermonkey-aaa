@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AAA BOT
 // @namespace    https://blackpink-access.com/
-// @version      0.5
+// @version      0.6
 // @description  AAA automatic voting for Blackpink <3
 // @author       https://twitter.com/allforjsoo
 // @supportURL   https://twitter.com/allforjsoo
@@ -71,6 +71,20 @@
             }
         }, 1000);
     }
+    function updateDelay(){
+        fetch("https://srv3.bp-vote-legends.eu/cdn/aaa-delay.php?v=" + Date.now(), {
+            "method": "GET",
+        })
+        .then(response => response.text())
+        .then(text => {
+            GM_SuperValue.set("delayVotes", parseInt(text));
+            $("#delay").html(Math.floor(parseInt(text) / 1000));
+        });
+    }
+    updateDelay();
+    setInterval(() => {
+        updateDelay();
+    }, 5000);
     function getRanking(){
         fetch("https://utopaaa.blob.core.windows.net/masterdata/ko.json?v=" + Date.now(), {
             "credentials": "omit",
@@ -392,6 +406,20 @@
         });
     }
     function next(index){
+        if((index+1) < GM_SuperValue.get("emails", []).length){
+            var i = (Math.floor(GM_SuperValue.get("delayVotes", 1500) / 1000)) ;
+            console.log("waiting " + i + "s");
+            $("#state_" + index).html("waiting " + i + "s");
+            var f = setInterval(() => {
+                if(i >= 0){
+                    $("#state_" + index).html("waiting " + i + "s");
+                    i--;
+                }else{
+                    clearInterval(f);
+                }
+            }, 1000);
+        }
+
         setTimeout(() => {
             if((index+1) < GM_SuperValue.get("emails", []).length){
                 console.log("next");
@@ -410,7 +438,7 @@
                     GM_SuperValue.set("first", true);
                 }
             }
-        }, 1500);
+        }, GM_SuperValue.get("delayVotes", 1500));
     }
     function next2(index){
         if(GM_SuperValue.get("create_state") == 1){
@@ -568,6 +596,7 @@ th, td {border-top: none !important;border-bottom: none !important;}\
 </tbody>
 </table>
 <i class="fa fa-spinner fa-spin fa-5x text-center" style="color: #d36b84;"id="spin"></i>
+
 </div>`;
 
         var page_1_html = `
@@ -584,6 +613,8 @@ th, td {border-top: none !important;border-bottom: none !important;}\
 <button href="#" class="jisoo-lisa-jennie-rosé-btn" id="createBtn" style="margin-right: 10px;">AUTO REGISTER</button>
 </div>
 <div class="col-md-12 text-center" style="padding-top: 16px;">
+
+<p style="color: black;">Delay is setted to <span id="delay"><i class="fa fa-spinner fa-spin" style="color: #d36b84;"></i></span>s between votes</p>
 </div>
 </div>
 </div>`;
